@@ -526,8 +526,8 @@ public record FacilityCreateDto(
     int?     Floor,
     int?     Capacity,
     string?  Equipment,
-    string   Status = "available",
-    string?  Notes
+    string?  Notes,
+    string   Status = "available"
 );
 
 public record FacilityBookingDto(
@@ -577,8 +577,8 @@ public record AnnouncementCreateDto(
     string?  TargetGroup,
     Guid?    TargetId,
     DateTime? ExpiresAt,
-    bool     IsPinned = false,
-    string?  Attachments
+    string?  Attachments,
+    bool     IsPinned = false
 );
 
 // ── STUDENT REGISTRATION ──────────────────────────────────────

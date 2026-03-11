@@ -16,6 +16,7 @@ public interface IStudentService
     Task<bool>           DeleteAsync(Guid id);
     Task<List<GradeDto>>   GetGradesAsync(Guid studentId, string? academicYear, int? semester);
     Task<List<TuitionDto>> GetTuitionsAsync(Guid studentId);
+    Task<List<StudentRegistrationDto>> GetScheduleAsync(Guid studentId, string? academicYear = null, int? semester = null);
 }
 
 public class StudentService : IStudentService
@@ -173,6 +174,38 @@ public class StudentService : IStudentService
             .OrderBy(t => t.AcademicYear).ThenBy(t => t.Semester)
             .Select(t => TuitionService.ToDto(t)).ToListAsync();
     }
+
+    public async Task<List<StudentRegistrationDto>> GetScheduleAsync(Guid studentId, string? academicYear = null, int? semester = null)
+    {
+        var q = _db.StudentRegistrations
+            .Include(r => r.Student)
+            .Include(r => r.ClassCourse).ThenInclude(cc => cc!.Course)
+            .Include(r => r.ClassCourse).ThenInclude(cc => cc!.Class)
+            .Where(r => r.StudentId == studentId);
+
+        if (!string.IsNullOrWhiteSpace(academicYear)) q = q.Where(r => r.AcademicYear == academicYear);
+        if (semester.HasValue) q = q.Where(r => r.Semester == semester);
+
+        var items = await q.ToListAsync();
+        return items.Select(ToRegistrationDto).ToList();
+    }
+
+    private static StudentRegistrationDto ToRegistrationDto(StudentRegistration r) => new(
+        r.Id,
+        r.StudentId,
+        r.Student?.StudentCode ?? "",
+        r.Student?.FullName ?? "",
+        r.ClassCourseId,
+        r.ClassCourse?.Course?.Code ?? "",
+        r.ClassCourse?.Course?.Name ?? "",
+        r.ClassCourse?.Class?.Name ?? "",
+        r.AcademicYear,
+        r.Semester,
+        r.RegistrationDate,
+        r.Status,
+        r.Notes,
+        r.CreatedAt
+    );
 
     public static StudentDto ToDto(Student s) => new(
         s.Id, s.StudentCode, s.FullName, s.DateOfBirth,

@@ -26,8 +26,9 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest req)
     {
+        // Allow login with either username or email
         var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.Username == req.Username && u.IsActive);
+            .FirstOrDefaultAsync(u => (u.Username == req.Username || u.Email == req.Username) && u.IsActive);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return null;

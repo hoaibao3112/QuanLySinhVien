@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StudentManagement.API.Data;
+using StudentManagement.API.Models;
 using StudentManagement.API.Services;
 using System.Text;
 
@@ -61,7 +62,7 @@ builder.Services.AddScoped<InstructorService>();
 // ── CORS cho NextJS ──────────────────────────────────────────
 builder.Services.AddCors(opt =>
     opt.AddPolicy("NextJS", p =>
-        p.WithOrigins("http://localhost:3000")
+        p.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:3004", "http://localhost:3005")
          .AllowAnyHeader()
          .AllowAnyMethod()
          .AllowCredentials()));
@@ -101,6 +102,44 @@ builder.Services.AddControllers();
 
 // ── Build ─────────────────────────────────────────────────────
 var app = builder.Build();
+
+// ── Seed Database ─────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    
+    try
+    {
+        // Seed default admin user if no users exist
+        if (!await db.Users.AnyAsync())
+        {
+            var adminUser = new User
+            {
+                Id = Guid.Parse("a0000000-0000-0000-0000-000000000001"),
+                Username = "admin",
+                Email = "admin@edu.vn",
+                PasswordHash = "$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyc37xbJe", // password123
+                Role = "admin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
+            db.Users.Add(adminUser);
+            await db.SaveChangesAsync();
+            
+            Console.WriteLine("✓ Default admin user created (username: admin, password: password123)");
+        }
+        else
+        {
+            Console.WriteLine("✓ Database already has users");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠ Database seeding error: {ex.Message}");
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

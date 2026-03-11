@@ -70,4 +70,9 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}/tuitions")]
     public async Task<IActionResult> GetTuitions(Guid id)
         => Ok(await _svc.GetTuitionsAsync(id));
+
+    /// <summary>Thời khóa biểu của sinh viên</summary>
+    [HttpGet("{id}/schedule")]
+    public async Task<IActionResult> GetSchedule(Guid id, [FromQuery] string? academicYear = null, [FromQuery] int? semester = null)
+        => Ok(await _svc.GetScheduleAsync(id, academicYear, semester));
 }

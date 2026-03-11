@@ -187,8 +187,8 @@ public class AttendanceService
         var result = new List<AttendanceDto>();
         foreach (var att in attendances)
         {
-            var dto = await GetAttendanceByIdAsync(att.Id);
-            if (dto != null) result.Add(dto);
+            var attDto = await GetAttendanceByIdAsync(att.Id);
+            if (attDto != null) result.Add(attDto);
         }
 
         return result;
