@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Search, Loader2, CheckCircle, BookOpen, User, MapPin, Clock, Hash } from 'lucide-react';
-import { departmentsApi, coursesApi, registrationApi, instructorsApi } from '@/lib/api';
+import { departmentsApi, coursesApi, registrationApi, instructorsApi, facilitiesApi } from '@/lib/api';
 
 interface AddCourseModalProps {
   isOpen: boolean;
@@ -33,6 +33,7 @@ export default function AddCourseModal({ isOpen, onClose, periodId, onSuccess }:
   const [instructors, setInstructors] = useState<any[]>([]);
   const [selectedDept, setSelectedDept] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [rooms, setRooms] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     courseId: '',
@@ -49,6 +50,7 @@ export default function AddCourseModal({ isOpen, onClose, periodId, onSuccess }:
     if (isOpen) {
       loadDepartments();
       loadInstructors();
+      loadRooms();
     }
   }, [isOpen]);
 
@@ -78,6 +80,15 @@ export default function AddCourseModal({ isOpen, onClose, periodId, onSuccess }:
       setInstructors(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load instructors', err);
+    }
+  };
+
+  const loadRooms = async () => {
+    try {
+      const resp = await facilitiesApi.getAll({ type: 'classroom' });
+      setRooms(Array.isArray(resp.data) ? resp.data : []);
+    } catch (err) {
+      console.error('Failed to load rooms', err);
     }
   };
 
@@ -258,8 +269,8 @@ export default function AddCourseModal({ isOpen, onClose, periodId, onSuccess }:
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
               >
                 <option value="">-- Chọn phòng --</option>
-                {COMMON_ROOMS.map(r => (
-                  <option key={r} value={r}>{r}</option>
+                {rooms.map(r => (
+                  <option key={r.id} value={r.name}>{r.name} ({r.building})</option>
                 ))}
               </select>
             </div>

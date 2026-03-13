@@ -211,6 +211,12 @@ export const dashboardApi = {
   getOverview: () => api.get<any>('/dashboard'),
 };
 
+// Facilities API
+export const facilitiesApi = {
+  getAll: (params?: any) => api.get<any>(`/facilities${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getById: (id: string) => api.get<any>(`/facilities/${id}`),
+};
+
 // Registration API
 export const registrationApi = {
   // Student endpoints

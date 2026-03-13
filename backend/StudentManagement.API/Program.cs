@@ -48,7 +48,7 @@ builder.Services.AddScoped<IDashboardService,  DashboardService>();
 // New Services (Attendance, Instructor, etc.)
 builder.Services.AddScoped<AttendanceService>();
 builder.Services.AddScoped<InstructorService>();
-// Add more services as you implement them:
+builder.Services.AddScoped<FacilityService>();
 // builder.Services.AddScoped<ExamScheduleService>();
 // builder.Services.AddScoped<ScholarshipService>();
 // builder.Services.AddScoped<StudentRegistrationService>();

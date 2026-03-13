@@ -398,6 +398,7 @@ public class StudentRegistration
 
     public Student?     Student     { get; set; }
     public ClassCourse? ClassCourse { get; set; }
+    public SemesterCourse? SemesterCourse { get; set; }
 }
 
 // ── REGISTRATION_PERIODS ──────────────────────────────────────
