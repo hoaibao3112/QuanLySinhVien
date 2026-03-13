@@ -108,6 +108,18 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     
+    // ── Update Role Constraint FIRST ──────────────────────────
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;");
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'staff', 'student', 'instructor'));");
+        Console.WriteLine("✓ Role constraint updated to allow: admin, staff, student, instructor");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠ Failed to update role constraint: {ex.Message}");
+    }
+    
     try
     {
         // Seed default admin user if no users exist
@@ -124,14 +136,55 @@ using (var scope = app.Services.CreateScope())
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
+
+            var studentUser = new User
+            {
+                Id = Guid.Parse("b0000000-0000-0000-0000-000000000001"),
+                Username = "student1",
+                Email = "student1@edu.vn",
+                PasswordHash = "$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyc37xbJe", // password123
+                Role = "student",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
             
             db.Users.Add(adminUser);
+            db.Users.Add(studentUser);
             await db.SaveChangesAsync();
             
-            Console.WriteLine("✓ Default admin user created (username: admin, password: password123)");
+            Console.WriteLine("✓ Default users created:");
+            Console.WriteLine("  - Admin: username=admin, password=password123");
+            Console.WriteLine("  - Student: username=student1, password=password123");
         }
         else
         {
+            // Add student user if not exists
+            var existingStudent = await db.Users.FirstOrDefaultAsync(u => u.Username == "student1");
+            if (existingStudent != null)
+            {
+                // Remove old student user to recreate with correct role
+                db.Users.Remove(existingStudent);
+                await db.SaveChangesAsync();
+                Console.WriteLine("✓ Old student1 user removed");
+            }
+            
+            // Create student user
+            var studentUser = new User
+            {
+                Id = Guid.Parse("b0000000-0000-0000-0000-000000000001"),
+                Username = "student1",
+                Email = "student1@edu.vn",
+                PasswordHash = "$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyc37xbJe", // password123
+                Role = "student",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
+            db.Users.Add(studentUser);
+            await db.SaveChangesAsync();
+            Console.WriteLine("✓ Student user created (username: student1, password: password123)");
             Console.WriteLine("✓ Database already has users");
         }
     }

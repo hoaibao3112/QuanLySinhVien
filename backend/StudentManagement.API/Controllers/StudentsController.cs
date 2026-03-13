@@ -30,6 +30,17 @@ public class StudentsController : ControllerBase
         return s is null ? NotFound(new { message = "Không tìm thấy sinh viên." }) : Ok(s);
     }
 
+    /// <summary>Lấy thông tin sinh viên của user hiện tại (dùng cho student role)</summary>
+    [HttpGet("me/profile")]
+    public async Task<IActionResult> GetMyProfile()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
+        
+        var s = await _svc.GetByIdAsync(Guid.Parse(userId));
+        return s is null ? NotFound(new { message = "Không tìm thấy hồ sơ sinh viên." }) : Ok(s);
+    }
+
     /// <summary>Thêm sinh viên mới</summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] StudentCreateDto dto)

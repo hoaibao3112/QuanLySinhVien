@@ -17,15 +17,22 @@ public class DepartmentService : IDepartmentService
     private readonly AppDbContext _db;
     public DepartmentService(AppDbContext db) => _db = db;
 
-    public async Task<List<DepartmentDto>> GetAllAsync() =>
-        await _db.Departments
-            .Select(d => new DepartmentDto(
-                d.Id, d.Code, d.Name,
-                d.Students.Count,
-                d.Courses.Count,
-                d.Classes.Count))
-            .OrderBy(d => d.Code)
-            .ToListAsync();
+    public async Task<List<DepartmentDto>> GetAllAsync()
+    {
+        var departments = await _db.Departments.ToListAsync();
+        var result = new List<DepartmentDto>();
+
+        foreach (var d in departments)
+        {
+            var studentCount = await _db.Students.CountAsync(s => s.DepartmentId == d.Id);
+            var courseCount = await _db.Courses.CountAsync(c => c.DepartmentId == d.Id);
+            var classCount = await _db.Classes.CountAsync(c => c.DepartmentId == d.Id);
+            
+            result.Add(new DepartmentDto(d.Id, d.Code, d.Name, studentCount, courseCount, classCount));
+        }
+
+        return result.OrderBy(d => d.Code).ToList();
+    }
 
     public async Task<DepartmentDto> CreateAsync(DepartmentCreateDto dto)
     {

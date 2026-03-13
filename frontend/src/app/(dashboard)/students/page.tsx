@@ -1,37 +1,148 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
-import { studentsApi } from '@/lib/api';
+import { studentsApi, classesApi, departmentsApi } from '@/lib/api';
 import { Student } from '@/types';
+import { getUser } from '@/lib/auth';
 
 export default function StudentsPage() {
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [formData, setFormData] = useState({
+    studentCode: '',
+    fullName: '',
+    dateOfBirth: '',
+    gender: 'male',
+    email: '',
+    phone: '',
+    address: '',
+    classId: '',
+    departmentId: '',
+    enrollmentYear: new Date().getFullYear(),
+    status: 'active'
+  });
+
+  // Route protection - only admin can access
+  useEffect(() => {
+    const user = getUser();
+    if (user?.role !== 'admin') {
+      alert('Bạn không có quyền truy cập trang này. Chuyển về Hồ sơ cá nhân.');
+      router.push('/students/profile');
+    }
+  }, [router]);
 
   useEffect(() => {
-    loadStudents();
+    loadData();
   }, []);
 
-  const loadStudents = async () => {
+  const loadData = async () => {
     try {
-      const response = await studentsApi.getAll();
-      setStudents(response.data || response);
-    } catch (error) {
-      console.error('Failed to load students:', error);
+      const [studentsRes, classesRes, deptsRes] = await Promise.all([
+        studentsApi.getAll(),
+        classesApi.getAll(),
+        departmentsApi.getAll()
+      ]);
+      setStudents(Array.isArray(studentsRes.data) ? studentsRes.data : (Array.isArray(studentsRes) ? studentsRes : []));
+      setClasses(Array.isArray(classesRes.data) ? classesRes.data : (Array.isArray(classesRes) ? classesRes : []));
+      setDepartments(Array.isArray(deptsRes.data) ? deptsRes.data : (Array.isArray(deptsRes) ? deptsRes : []));
+    } catch (error: any) {
+      console.error('Failed to load data:', error);
+      alert('Lỗi khi tải dữ liệu: ' + (error.message || 'Không thể kết nối tới server'));
     } finally {
       setLoading(false);
     }
   };
 
+  const handleOpenModal = (student?: Student) => {
+    if (student) {
+      setEditingStudent(student);
+      setFormData({
+        studentCode: student.code || '',
+        fullName: student.fullName || '',
+        dateOfBirth: student.dateOfBirth || '',
+        gender: student.gender || 'male',
+        email: student.email || '',
+        phone: student.phone || '',
+        address: student.address || '',
+        classId: student.classId || '',
+        departmentId: student.departmentId || '',
+        enrollmentYear: student.enrollmentYear || new Date().getFullYear(),
+        status: student.status || 'active'
+      });
+    } else {
+      setEditingStudent(null);
+      setFormData({
+        studentCode: '',
+        fullName: '',
+        dateOfBirth: '',
+        gender: 'male',
+        email: '',
+        phone: '',
+        address: '',
+        classId: '',
+        departmentId: '',
+        enrollmentYear: new Date().getFullYear(),
+        status: 'active'
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingStudent(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const submitData = {
+        ...formData,
+        classId: formData.classId || null,
+        departmentId: formData.departmentId || null,
+        dateOfBirth: formData.dateOfBirth || null,
+      };
+
+      if (editingStudent) {
+        await studentsApi.update(editingStudent.id, submitData);
+      } else {
+        await studentsApi.create(submitData);
+      }
+      
+      await loadData();
+      handleCloseModal();
+      alert(editingStudent ? 'Cập nhật sinh viên thành công!' : 'Thêm sinh viên thành công!');
+    } catch (error: any) {
+      alert('Lỗi: ' + (error.message || 'Không thể thực hiện thao tác'));
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Bạn có chắc muốn xóa sinh viên "${name}"?`)) return;
+    
+    try {
+      await studentsApi.delete(id);
+      await loadData();
+      alert('Xóa sinh viên thành công!');
+    } catch (error: any) {
+      alert('Lỗi: ' + (error.message || 'Không thể xóa sinh viên'));
+    }
+  };
+
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
-      student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      student.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -65,7 +176,7 @@ export default function StudentsPage() {
         description="Quản lý và theo dõi thông tin sinh viên trong toàn hệ thống"
         action={
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,16 +282,16 @@ export default function StudentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
-                            {student.code.substring(0, 2)}
+                            {student.code?.substring(0, 2) || '--'}
                           </div>
-                          <span className="text-sm font-medium text-gray-900">{student.code}</span>
+                          <span className="text-sm font-medium text-gray-900">{student.code || 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{student.fullName}</div>
+                        <div className="text-sm font-medium text-gray-900">{student.fullName || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{student.email}</div>
+                        <div className="text-sm text-gray-900">{student.email || 'N/A'}</div>
                         <div className="text-sm text-gray-500">{student.phone || '—'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -189,12 +300,20 @@ export default function StudentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(student.status)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-900">
+                          <button 
+                            onClick={() => handleOpenModal(student)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Sửa"
+                          >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                           </button>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button 
+                            onClick={() => handleDelete(student.id, student.fullName || student.code || 'sinh viên này')}
+                            className="text-red-600 hover:text-red-900"
+                            title="Xóa"
+                          >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -236,6 +355,183 @@ export default function StudentsPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingStudent ? 'Cập nhật sinh viên' : 'Thêm sinh viên mới'}
+              </h3>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã sinh viên <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingStudent}
+                    value={formData.studentCode}
+                    onChange={(e) => setFormData({...formData, studentCode: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="VD: SV0001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Họ và tên <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nhập họ tên đầy đủ"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="email@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0123456789"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Khoa</label>
+                  <select
+                    value={formData.departmentId}
+                    onChange={(e) => setFormData({...formData, departmentId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">-- Chọn khoa --</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Lớp</label>
+                  <select
+                    value={formData.classId}
+                    onChange={(e) => setFormData({...formData, classId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">-- Chọn lớp --</option>
+                    {classes.map((cls) => (
+                      <option key={cls.id} value={cls.id}>{cls.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm nhập học</label>
+                  <input
+                    type="number"
+                    value={formData.enrollmentYear}
+                    onChange={(e) => setFormData({...formData, enrollmentYear: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    min="2000"
+                    max="2100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="active">Đang học</option>
+                    <option value="inactive">Nghỉ học</option>
+                    <option value="suspended">Ngừng học</option>
+                    <option value="graduated">Tốt nghiệp</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                  <textarea
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={2}
+                    placeholder="Nhập địa chỉ"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  {editingStudent ? 'Cập nhật' : 'Thêm mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

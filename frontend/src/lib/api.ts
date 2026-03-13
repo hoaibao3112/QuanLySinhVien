@@ -48,11 +48,32 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      // Handle 401 Unauthorized - redirect to login
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+
+      const error = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
+      const errorMessage = error.message || error.title || error.error || `HTTP error! status: ${response.status}`;
+      console.error('API Error:', errorMessage, error);
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    // Handle empty responses
+    const text = await response.text();
+    if (!text) return {} as T;
+    
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('Failed to parse JSON:', text);
+      return text as any;
+    }
   }
 
   async get<T>(endpoint: string): Promise<T> {
@@ -104,10 +125,14 @@ export const authApi = {
 export const studentsApi = {
   getAll: (params?: any) => api.get<any>(`/students${params ? `?${new URLSearchParams(params)}` : ''}`),
   getById: (id: string) => api.get<any>(`/students/${id}`),
+  getMyProfile: () => api.get<any>('/students/me/profile'),
   create: (data: any) => api.post<any>('/students', data),
   update: (id: string, data: any) => api.put<any>(`/students/${id}`, data),
   delete: (id: string) => api.delete(`/students/${id}`),
   getSchedule: (id: string, params?: any) => api.get<any>(`/students/${id}/schedule${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getGrades: (id: string, params?: any) => api.get<any>(`/students/${id}/grades${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getTuitions: (id: string) => api.get<any>(`/students/${id}/tuitions`),
+  getProfile: (id: string) => api.get<any>(`/students/${id}`),
 };
 
 // Instructors API
@@ -117,8 +142,9 @@ export const instructorsApi = {
   create: (data: any) => api.post<any>('/instructors', data),
   update: (id: string, data: any) => api.put<any>(`/instructors/${id}`, data),
   delete: (id: string) => api.delete(`/instructors/${id}`),
-  getSchedule: (id: string) => api.get<any>(`/instructors/${id}/schedule`),
+  getSchedule: (id: string, params?: any) => api.get<any>(`/instructors/${id}/schedule${params ? `?${new URLSearchParams(params)}` : ''}`),
   getClasses: (id: string) => api.get<any>(`/instructors/${id}/classes`),
+  getEvaluations: (id: string, params?: any) => api.get<any>(`/instructors/${id}/evaluations${params ? `?${new URLSearchParams(params)}` : ''}`),
 };
 
 // Departments API

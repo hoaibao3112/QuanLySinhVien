@@ -10,7 +10,9 @@ export interface Student {
   address?: string;
   classId?: string;
   className?: string;
+  departmentId?: string;
   enrollmentDate?: string;
+  enrollmentYear?: number;
   status: 'active' | 'inactive' | 'suspended' | 'graduated';
 }
 
@@ -49,6 +51,7 @@ export interface Class {
   departmentId?: string;
   departmentName?: string;
   academicYear?: string;
+  semester?: number;
   maxStudents?: number;
   currentStudents?: number;
 }
@@ -91,4 +94,54 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+export interface Grade {
+  id: string;
+  studentId: string;
+  courseId: string;
+  courseName?: string;
+  courseCode?: string;
+  midtermScore?: number;
+  finalScore?: number;
+  practicalScore?: number;
+  assignmentScore?: number;
+  totalScore?: number;
+  letterGrade?: string;
+  academicYear: string;
+  semester: number;
+}
+
+export interface Schedule {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  instructorName?: string;
+  room?: string;
+  schedule?: string; // e.g., "Thứ 2, 07:30-09:30"
+  dayOfWeek?: string;
+  startTime?: string;
+  endTime?: string;
+  classCode?: string;
+  className?: string;
+  credits?: number;
+}
+
+export interface StudentProfile {
+  id: string;
+  code: string;
+  fullName: string;
+  dateOfBirth?: string;
+  gender?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  classId?: string;
+  className?: string;
+  classCode?: string;
+  departmentId?: string;
+  departmentName?: string;
+  enrollmentDate?: string;
+  status: 'active' | 'inactive' | 'suspended' | 'graduated';
+  academicYear?: string;
 }

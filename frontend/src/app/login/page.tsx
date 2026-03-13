@@ -64,6 +64,13 @@ export default function LoginPage() {
             <p className="text-gray-600 mt-1">Please enter your credentials to access your account.</p>
           </div>
 
+          {/* Default credentials info */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium mb-1">🔑 Tài khoản mặc định:</p>
+            <p className="text-sm text-blue-700">Username: <span className="font-mono font-semibold">admin</span></p>
+            <p className="text-sm text-blue-700">Password: <span className="font-mono font-semibold">password123</span></p>
+          </div>
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {error}
@@ -145,6 +152,27 @@ export default function LoginPage() {
                   </svg>
                 </>
               )}
+            </button>
+
+            {/* Quick Login Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({ username: 'admin', password: 'password123' });
+                setTimeout(() => {
+                  const form = document.querySelector('form');
+                  if (form) {
+                    const event = new Event('submit', { bubbles: true, cancelable: true });
+                    form.dispatchEvent(event);
+                  }
+                }, 100);
+              }}
+              className="w-full mt-3 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Đăng nhập nhanh (Admin)
             </button>
           </form>
 

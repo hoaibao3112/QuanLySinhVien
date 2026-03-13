@@ -48,6 +48,21 @@ export const getUser = (): User | null => {
   return null;
 };
 
+export const isAdmin = (): boolean => {
+  const user = getUser();
+  return user?.role === 'admin';
+};
+
+export const isStudent = (): boolean => {
+  const user = getUser();
+  return user?.role === 'student';
+};
+
+export const isInstructor = (): boolean => {
+  const user = getUser();
+  return user?.role === 'instructor';
+};
+
 export const isAuthenticated = (): boolean => {
   return !!getAuthToken();
 };

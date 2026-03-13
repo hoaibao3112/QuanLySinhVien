@@ -1,27 +1,130 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
-import { classesApi } from '@/lib/api';
+import { classesApi, departmentsApi } from '@/lib/api';
 import { Class } from '@/types';
+import { X } from 'lucide-react';
+import { getUser } from '@/lib/auth';
+
+interface Department {
+  id: string;
+  name: string;
+  code: string;
+}
 
 export default function ClassesPage() {
+  const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [formData, setFormData] = useState({
+    code: '',
+    name: '',
+    departmentId: '',
+    academicYear: '',
+    semester: 1,
+    maxStudents: 40
+  });
 
   useEffect(() => {
-    loadClasses();
+    const user = getUser();
+    if (user?.role !== 'admin') {
+      alert('Bạn không có quyền truy cập trang này. Chuyển về Trang chủ.');
+      router.push('/dashboard');
+      return;
+    }
+  }, [router]);
+
+  useEffect(() => {
+    loadData();
   }, []);
 
-  const loadClasses = async () => {
+  const loadData = async () => {
     try {
-      const response = await classesApi.getAll();
-      setClasses(response.data || response);
-    } catch (error) {
-      console.error('Failed to load classes:', error);
+      const [classesRes, deptsRes] = await Promise.all([
+        classesApi.getAll(),
+        departmentsApi.getAll()
+      ]);
+      setClasses(Array.isArray(classesRes.data) ? classesRes.data : (Array.isArray(classesRes) ? classesRes : []));
+      setDepartments(Array.isArray(deptsRes.data) ? deptsRes.data : (Array.isArray(deptsRes) ? deptsRes : []));
+    } catch (error: any) {
+      console.error('Failed to load data:', error);
+      alert('Lỗi khi tải dữ liệu: ' + (error.message || 'Không thể kết nối tới server'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenModal = (cls?: Class) => {
+    if (cls) {
+      setSelectedClass(cls);
+      setIsEditing(true);
+      setFormData({
+        code: cls.code || '',
+        name: cls.name || '',
+        departmentId: cls.departmentId || '',
+        academicYear: cls.academicYear || '',
+        semester: cls.semester || 1,
+        maxStudents: cls.maxStudents || 40
+      });
+    } else {
+      setSelectedClass(null);
+      setIsEditing(false);
+      setFormData({
+        code: '',
+        name: '',
+        departmentId: '',
+        academicYear: '',
+        semester: 1,
+        maxStudents: 40
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedClass(null);
+    setIsEditing(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const submitData = {
+        ...formData,
+        departmentId: formData.departmentId || null,
+      };
+
+      if (isEditing && selectedClass) {
+        await classesApi.update(selectedClass.id, submitData);
+      } else {
+        await classesApi.create(submitData);
+      }
+      
+      await loadData();
+      handleCloseModal();
+      alert(isEditing ? 'Cập nhật lớp học thành công!' : 'Thêm lớp học thành công!');
+    } catch (error: any) {
+      alert('Lỗi: ' + (error.message || 'Không thể thực hiện thao tác'));
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Bạn có chắc muốn xóa lớp "${name}"?`)) return;
+    
+    try {
+      await classesApi.delete(id);
+      await loadData();
+      alert('Xóa lớp học thành công!');
+    } catch (error: any) {
+      alert('Lỗi: ' + (error.message || 'Không thể xóa lớp học'));
     }
   };
 
@@ -36,7 +139,10 @@ export default function ClassesPage() {
         title="Quản lý Lớp học"
         description="Danh sách các lớp học chính quy trong toàn hệ thống đào tạo"
         action={
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -177,12 +283,20 @@ export default function ClassesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
-                          <button className="text-blue-600 hover:text-blue-900">
+                          <button 
+                            onClick={() => handleOpenModal(cls)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Sửa"
+                          >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                           </button>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button 
+                            onClick={() => handleDelete(cls.id, cls.name || cls.code || 'lớp học này')}
+                            className="text-red-600 hover:text-red-900"
+                            title="Xóa"
+                          >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -218,6 +332,130 @@ export default function ClassesPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {isEditing ? 'Cập nhật lớp học' : 'Thêm lớp học mới'}
+              </h3>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã lớp <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={isEditing}
+                    value={formData.code}
+                    onChange={(e) => setFormData({...formData, code: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="VD: CNTT01-K17"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên lớp <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="VD: Công nghệ thông tin 01 - K17"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Khoa</label>
+                  <select
+                    value={formData.departmentId}
+                    onChange={(e) => setFormData({...formData, departmentId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">-- Chọn khoa --</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Niên khóa <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.academicYear}
+                    onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="VD: 2023-2027"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Học kỳ <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.semester}
+                    onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="1">Học kỳ 1</option>
+                    <option value="2">Học kỳ 2</option>
+                    <option value="3">Học kỳ hè</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sĩ số tối đa <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={formData.maxStudents}
+                    onChange={(e) => setFormData({...formData, maxStudents: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    min="1"
+                    max="200"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  {isEditing ? 'Cập nhật' : 'Thêm mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

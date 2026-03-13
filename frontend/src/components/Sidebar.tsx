@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, CreditCard, User, LogOut, Settings, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { 
+  Home, BookOpen, CreditCard, User, LogOut, Settings, Calendar,
+  Users, GraduationCap, Building, BookMarked, ClipboardList,
+  FileText, DollarSign, Award, UserCheck
+} from 'lucide-react';
+import { getUser } from '@/lib/auth';
 
 interface SidebarItemProps {
   href: string;
@@ -27,34 +33,38 @@ const SidebarItem = ({ href, icon: Icon, label, isActive }: SidebarItemProps) =>
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<string>('');
 
-  const menuItems = [
-    {
-      href: '/dashboard',
-      icon: Home,
-      label: 'Trang chủ',
-    },
-    {
-      href: '/grades',
-      icon: BookOpen,
-      label: 'Học tập',
-    },
-    {
-      href: '/schedule',
-      icon: Calendar,
-      label: 'Lịch học',
-    },
-    {
-      href: '/tuition',
-      icon: CreditCard,
-      label: 'Học phí',
-    },
-    {
-      href: '/profile',
-      icon: User,
-      label: 'Cá nhân',
-    },
+  useEffect(() => {
+    const user = getUser();
+    setUserRole(user?.role || 'student');
+  }, []);
+
+  // Menu cho Admin
+  const adminMenuItems = [
+    { href: '/dashboard', icon: Home, label: 'Tổng quan' },
+    { href: '/students', icon: Users, label: 'Sinh viên' },
+    { href: '/instructors', icon: GraduationCap, label: 'Giảng viên' },
+    { href: '/classes', icon: Building, label: 'Lớp học' },
+    { href: '/courses', icon: BookMarked, label: 'Môn học' },
+    { href: '/departments', icon: Building, label: 'Khoa' },
+    { href: '/attendance', icon: UserCheck, label: 'Điểm danh' },
+    { href: '/grades', icon: FileText, label: 'Điểm số' },
+    { href: '/tuition', icon: DollarSign, label: 'Học phí' },
   ];
+
+  // Menu cho Sinh viên
+  const studentMenuItems = [
+    { href: '/dashboard', icon: Home, label: 'Trang chủ' },
+    { href: '/students/profile', icon: User, label: 'Hồ sơ cá nhân' },
+    { href: '/grades', icon: BookOpen, label: 'Xem điểm' },
+    { href: '/schedule', icon: Calendar, label: 'Thời khóa biểu' },
+    { href: '/registrations', icon: ClipboardList, label: 'Đăng ký môn học' },
+    { href: '/exams', icon: FileText, label: 'Lịch thi' },
+    { href: '/tuition', icon: CreditCard, label: 'Học phí' },
+  ];
+
+  const menuItems = userRole === 'admin' ? adminMenuItems : studentMenuItems;
 
   return (
     <aside className="w-72 bg-white border-r border-gray-100 h-screen flex flex-col p-6 sticky top-0">
