@@ -81,7 +81,8 @@ public record ClassCourseDto(
     int     Credits,
     string? TeacherName,
     string? Schedule,
-    string? Room
+    string? Room,
+    Guid?   RegistrationPeriodId
 );
 
 public record ClassCourseAssignDto(
@@ -585,18 +586,18 @@ public record AnnouncementCreateDto(
 public record StudentRegistrationDto(
     Guid     Id,
     Guid     StudentId,
-    string   StudentCode,
-    string   StudentName,
-    Guid     ClassCourseId,
+    Guid     CourseId,
     string   CourseCode,
     string   CourseName,
+    int      Credits,
+    string   ClassCode,
     string   ClassName,
+    string?  TeacherName,
+    string?  Schedule,
+    string?  Room,
     string   AcademicYear,
     int      Semester,
-    DateTime RegistrationDate,
-    string   Status, // registered, approved, cancelled, dropped
-    string?  Notes,
-    DateTime CreatedAt
+    string   Status
 );
 
 public record StudentRegistrationCreateDto(
@@ -605,6 +606,57 @@ public record StudentRegistrationCreateDto(
     string AcademicYear,
     int    Semester,
     string? Notes
+);
+
+// ── REGISTRATION PERIOD ───────────────────────────────────────
+public record RegistrationPeriodDto(
+    Guid     Id,
+    string   Name,
+    string   AcademicYear,
+    int      Semester,
+    DateTime StartAt,
+    DateTime EndAt,
+    string   Status,
+    string?  Description,
+    DateTime CreatedAt,
+    int      CourseCount
+);
+
+public record RegistrationPeriodCreateDto(
+    string   Name,
+    string   AcademicYear,
+    int      Semester,
+    DateTime StartAt,
+    DateTime EndAt,
+    string?  Description,
+    string   Status = "upcoming"
+);
+
+// ── SEMESTER COURSE ───────────────────────────────────────────
+public record SemesterCourseDto(
+    Guid    Id,
+    Guid    RegistrationPeriodId,
+    Guid    CourseId,
+    string  CourseCode,
+    string  CourseName,
+    int     Credits,
+    string? TeacherName,
+    string? Schedule,
+    string? Room,
+    int?    TotalPeriods,
+    int?    PeriodsPerSession,
+    bool    IsActive
+);
+
+public record SemesterCourseCreateDto(
+    Guid    RegistrationPeriodId,
+    Guid    CourseId,
+    string? TeacherName,
+    string? Schedule,
+    string? Room,
+    int?    TotalPeriods,
+    int?    PeriodsPerSession,
+    int     MaxStudents = 40
 );
 
 // ── STANDARD RESPONSES ────────────────────────────────────────

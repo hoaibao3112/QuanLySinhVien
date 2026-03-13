@@ -103,9 +103,11 @@ public class ClassCourse
     [Column("teacher_name")] public string? TeacherName { get; set; }
     [Column("schedule")]     public string? Schedule    { get; set; }
     [Column("room")]         public string? Room        { get; set; }
+    [Column("registration_period_id")] public Guid? RegistrationPeriodId { get; set; }
 
-    public Class?  Class  { get; set; }
-    public Course? Course { get; set; }
+    public Class?             Class              { get; set; }
+    public Course?            Course             { get; set; }
+    public RegistrationPeriod? RegistrationPeriod { get; set; }
 }
 
 // ── GRADES ────────────────────────────────────────────────────
@@ -385,7 +387,8 @@ public class StudentRegistration
 {
     [Column("id")]                public Guid     Id                { get; set; } = Guid.NewGuid();
     [Column("student_id")]        public Guid     StudentId         { get; set; }
-    [Column("class_course_id")]   public Guid     ClassCourseId     { get; set; }
+    [Column("class_course_id")]   public Guid?    ClassCourseId     { get; set; }
+    [Column("semester_course_id")] public Guid?   SemesterCourseId  { get; set; }
     [Column("academic_year")]     public string   AcademicYear      { get; set; } = "";
     [Column("semester")]          public int      Semester          { get; set; }
     [Column("registration_date")] public DateTime RegistrationDate  { get; set; } = DateTime.UtcNow;
@@ -396,3 +399,42 @@ public class StudentRegistration
     public Student?     Student     { get; set; }
     public ClassCourse? ClassCourse { get; set; }
 }
+
+// ── REGISTRATION_PERIODS ──────────────────────────────────────
+[Table("registration_periods")]
+public class RegistrationPeriod
+{
+    [Column("id")]            public Guid     Id           { get; set; } = Guid.NewGuid();
+    [Column("name")]          public string   Name         { get; set; } = "";
+    [Column("academic_year")] public string   AcademicYear { get; set; } = "";
+    [Column("semester")]      public int      Semester     { get; set; }
+    [Column("start_at")]      public DateTime StartAt      { get; set; }
+    [Column("end_at")]        public DateTime EndAt        { get; set; }
+    [Column("status")]        public string   Status       { get; set; } = "upcoming";
+    [Column("description")]   public string?  Description  { get; set; }
+    [Column("created_at")]    public DateTime CreatedAt    { get; set; } = DateTime.UtcNow;
+
+    public ICollection<SemesterCourse> SemesterCourses { get; set; } = new List<SemesterCourse>();
+    public ICollection<ClassCourse>    ClassCourses    { get; set; } = new List<ClassCourse>();
+}
+
+// ── SEMESTER_COURSES ──────────────────────────────────────────
+[Table("semester_courses")]
+public class SemesterCourse
+{
+    [Column("id")]                     public Guid     Id                     { get; set; } = Guid.NewGuid();
+    [Column("registration_period_id")] public Guid     RegistrationPeriodId   { get; set; }
+    [Column("course_id")]              public Guid     CourseId               { get; set; }
+    [Column("teacher_name")]            public string?  TeacherName            { get; set; }
+    [Column("schedule")]                public string?  Schedule               { get; set; }
+    [Column("room")]                    public string?  Room                   { get; set; }
+    [Column("total_periods")]           public int?     TotalPeriods           { get; set; }
+    [Column("periods_per_session")]     public int?     PeriodsPerSession      { get; set; }
+    [Column("max_students")]            public int      MaxStudents            { get; set; } = 40;
+    [Column("is_active")]              public bool     IsActive               { get; set; } = true;
+    [Column("created_at")]             public DateTime CreatedAt              { get; set; } = DateTime.UtcNow;
+
+    public RegistrationPeriod? RegistrationPeriod { get; set; }
+    public Course?            Course             { get; set; }
+}
+

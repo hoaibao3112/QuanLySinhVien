@@ -25,7 +25,7 @@ public class InstructorsController : ControllerBase
         [FromQuery] int pageSize = 20)
     {
         var result = await _instructorService.GetInstructorsAsync(search, departmentId, page, pageSize);
-        return Ok(result);
+        return Ok(new ApiResponse<PagedResult<InstructorDto>>(true, result));
     }
 
     [HttpGet("{id}")]

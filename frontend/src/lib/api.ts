@@ -210,3 +210,22 @@ export const tuitionApi = {
 export const dashboardApi = {
   getOverview: () => api.get<any>('/dashboard'),
 };
+
+// Registration API
+export const registrationApi = {
+  // Student endpoints
+  getActivePeriod: () => api.get<any>('/registration/active-period'),
+  getAvailableClasses: () => api.get<any>('/registration/available-classes'),
+  getMyRegistrations: () => api.get<any>('/registration/my-registrations'),
+  register: (data: any) => api.post<any>('/registration/register', data),
+  unregister: (registrationId: string) => api.post<any>(`/registration/unregister/${registrationId}`, {}),
+
+  // Admin endpoints
+  getPeriods: () => api.get<any>('/registration/periods'),
+  createPeriod: (data: any) => api.post<any>('/registration/periods', data),
+  updatePeriod: (id: string, data: any) => api.put<any>(`/registration/periods/${id}`, data),
+  
+  getSemesterCourses: (periodId: string) => api.get<any>(`/registration/periods/${periodId}/courses`),
+  addSemesterCourse: (periodId: string, data: any) => api.post<any>(`/registration/periods/${periodId}/courses`, data),
+  removeSemesterCourse: (courseId: string) => api.delete<any>(`/registration/courses/${courseId}`),
+};

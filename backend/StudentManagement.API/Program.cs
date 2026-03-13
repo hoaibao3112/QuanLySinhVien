@@ -98,7 +98,10 @@ builder.Services.AddSwaggerGen(c =>
     }});
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // ── Build ─────────────────────────────────────────────────────
 var app = builder.Build();
@@ -113,11 +116,16 @@ using (var scope = app.Services.CreateScope())
     {
         await db.Database.ExecuteSqlRawAsync("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;");
         await db.Database.ExecuteSqlRawAsync("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'staff', 'student', 'instructor'));");
-        Console.WriteLine("✓ Role constraint updated to allow: admin, staff, student, instructor");
+        
+        // Add constraint for registration_periods status
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE registration_periods DROP CONSTRAINT IF EXISTS registration_periods_status_check;");
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE registration_periods ADD CONSTRAINT registration_periods_status_check CHECK (status IN ('draft', 'active', 'closed'));");
+        
+        Console.WriteLine("✓ Database constraints updated (users role, registration status)");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠ Failed to update role constraint: {ex.Message}");
+        Console.WriteLine($"⚠ Failed to update database constraints: {ex.Message}");
     }
     
     try

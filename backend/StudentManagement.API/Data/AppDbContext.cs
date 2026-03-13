@@ -32,6 +32,8 @@ public class AppDbContext : DbContext
     public DbSet<FacilityBooking>      FacilityBookings      => Set<FacilityBooking>();
     public DbSet<Announcement>         Announcements         => Set<Announcement>();
     public DbSet<StudentRegistration>  StudentRegistrations  => Set<StudentRegistration>();
+    public DbSet<RegistrationPeriod>   RegistrationPeriods   => Set<RegistrationPeriod>();
+    public DbSet<SemesterCourse>       SemesterCourses       => Set<SemesterCourse>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -88,6 +90,28 @@ public class AppDbContext : DbContext
             e.HasOne(cc => cc.Course)
              .WithMany(c => c.ClassCourses)
              .HasForeignKey(cc => cc.CourseId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(cc => cc.RegistrationPeriod)
+             .WithMany(rp => rp.ClassCourses)
+             .HasForeignKey(cc => cc.RegistrationPeriodId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // REGISTRATION_PERIOD
+        b.Entity<RegistrationPeriod>(e => {
+            e.HasIndex(rp => new { rp.AcademicYear, rp.Semester, rp.Name }).IsUnique();
+        });
+
+        // SEMESTER_COURSE
+        b.Entity<SemesterCourse>(e => {
+            e.HasIndex(sc => new { sc.RegistrationPeriodId, sc.CourseId }).IsUnique();
+            e.HasOne(sc => sc.RegistrationPeriod)
+             .WithMany(rp => rp.SemesterCourses)
+             .HasForeignKey(sc => sc.RegistrationPeriodId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(sc => sc.Course)
+             .WithMany()
+             .HasForeignKey(sc => sc.CourseId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

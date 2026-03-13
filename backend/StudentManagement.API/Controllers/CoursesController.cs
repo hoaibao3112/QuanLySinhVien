@@ -13,9 +13,9 @@ public class CoursesController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] Guid? departmentId = null)
-        => Ok(await _svc.GetAllAsync(departmentId));
+        => Ok(new ApiResponse<List<CourseDto>>(true, await _svc.GetAllAsync(departmentId)));
 
-    [HttpPost]
+    [HttpPost, Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CourseCreateDto dto)
     {
         try { return Ok(await _svc.CreateAsync(dto)); }
@@ -23,7 +23,7 @@ public class CoursesController : ControllerBase
         catch (ArgumentException ex)         { return BadRequest(new { message = ex.Message }); }
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}"), Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] CourseCreateDto dto)
     {
         try

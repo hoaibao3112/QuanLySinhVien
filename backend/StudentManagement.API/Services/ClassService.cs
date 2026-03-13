@@ -101,7 +101,7 @@ public class ClassService : IClassService
             .OrderBy(cc => cc.Course!.Code)
             .Select(cc => new ClassCourseDto(
                 cc.Id, cc.CourseId, cc.Course!.Code, cc.Course.Name, cc.Course.Credits,
-                cc.TeacherName, cc.Schedule, cc.Room))
+                cc.TeacherName, cc.Schedule, cc.Room, cc.RegistrationPeriodId))
             .ToListAsync();
     }
 
@@ -124,7 +124,7 @@ public class ClassService : IClassService
         await _db.SaveChangesAsync();
         await _db.Entry(cc).Reference(x => x.Course).LoadAsync();
         return new ClassCourseDto(cc.Id, cc.CourseId, cc.Course!.Code, cc.Course.Name,
-            cc.Course.Credits, cc.TeacherName, cc.Schedule, cc.Room);
+            cc.Course.Credits, cc.TeacherName, cc.Schedule, cc.Room, cc.RegistrationPeriodId);
     }
 
     public async Task<bool> RemoveCourseAsync(Guid classId, Guid courseId)

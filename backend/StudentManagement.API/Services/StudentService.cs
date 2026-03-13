@@ -193,18 +193,18 @@ public class StudentService : IStudentService
     private static StudentRegistrationDto ToRegistrationDto(StudentRegistration r) => new(
         r.Id,
         r.StudentId,
-        r.Student?.StudentCode ?? "",
-        r.Student?.FullName ?? "",
-        r.ClassCourseId,
-        r.ClassCourse?.Course?.Code ?? "",
-        r.ClassCourse?.Course?.Name ?? "",
-        r.ClassCourse?.Class?.Name ?? "",
+        r.ClassCourse!.CourseId,
+        r.ClassCourse.Course!.Code,
+        r.ClassCourse.Course.Name,
+        r.ClassCourse.Course.Credits,
+        r.ClassCourse.Class!.Code,
+        r.ClassCourse.Class.Name,
+        r.ClassCourse.TeacherName,
+        r.ClassCourse.Schedule,
+        r.ClassCourse.Room,
         r.AcademicYear,
         r.Semester,
-        r.RegistrationDate,
-        r.Status,
-        r.Notes,
-        r.CreatedAt
+        r.Status
     );
 
     public static StudentDto ToDto(Student s) => new(

@@ -48,6 +48,7 @@ export default function Sidebar() {
     { href: '/classes', icon: Building, label: 'Lớp học' },
     { href: '/courses', icon: BookMarked, label: 'Môn học' },
     { href: '/departments', icon: Building, label: 'Khoa' },
+    { href: '/admin/registrations', icon: ClipboardList, label: 'Đặt đợt đăng ký' },
     { href: '/attendance', icon: UserCheck, label: 'Điểm danh' },
     { href: '/grades', icon: FileText, label: 'Điểm số' },
     { href: '/tuition', icon: DollarSign, label: 'Học phí' },

@@ -32,6 +32,9 @@ export interface Department {
   code: string;
   name: string;
   description?: string;
+  studentCount?: number;
+  courseCount?: number;
+  classCount?: number;
 }
 
 export interface Course {
@@ -39,7 +42,7 @@ export interface Course {
   code: string;
   name: string;
   credits: number;
-  departmentId?: string;
+  departmentId: string;
   departmentName?: string;
   description?: string;
 }
@@ -144,4 +147,74 @@ export interface StudentProfile {
   enrollmentDate?: string;
   status: 'active' | 'inactive' | 'suspended' | 'graduated';
   academicYear?: string;
+}
+
+// ── REGISTRATION MODULE ───────────────────────────────────────
+export interface RegistrationPeriod {
+  id: string;
+  name: string;
+  academicYear: string;
+  semester: number;
+  startAt: string;
+  endAt: string;
+  status: 'draft' | 'active' | 'closed';
+  description?: string;
+  createdAt: string;
+  semesterCourseCount: number;
+}
+
+export interface RegistrationPeriodCreateDto {
+  name: string;
+  academicYear: string;
+  semester: number;
+  startAt: string;
+  endAt: string;
+  status: 'draft' | 'active' | 'closed';
+  description?: string;
+}
+
+export interface SemesterCourse {
+  id: string;
+  registrationPeriodId: string;
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  credits: number;
+  isActive: boolean;
+}
+
+export interface ClassCourse {
+  id: string;
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  credits: number;
+  teacherName?: string;
+  schedule?: string;
+  room?: string;
+  registrationPeriodId?: string;
+}
+
+export interface StudentRegistration {
+  id: string;
+  studentId: string;
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  credits: number;
+  classCode: string;
+  className: string;
+  teacherName?: string;
+  schedule?: string;
+  room?: string;
+  academicYear: string;
+  semester: number;
+  status: string;
+}
+
+export interface StudentRegistrationCreateDto {
+  classCourseId: string;
+  academicYear: string;
+  semester: number;
+  notes?: string;
 }

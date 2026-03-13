@@ -12,7 +12,7 @@ public class DepartmentsController : ControllerBase
     public DepartmentsController(IDepartmentService svc) => _svc = svc;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _svc.GetAllAsync());
+    public async Task<IActionResult> GetAll() => Ok(new ApiResponse<List<DepartmentDto>>(true, await _svc.GetAllAsync()));
 
     [HttpPost, Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] DepartmentCreateDto dto)
