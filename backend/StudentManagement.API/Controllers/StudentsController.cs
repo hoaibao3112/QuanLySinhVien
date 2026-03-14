@@ -23,23 +23,13 @@ public class StudentsController : ControllerBase
         => Ok(await _svc.GetAllAsync(page, pageSize, search, classId, departmentId, status));
 
     /// <summary>Chi tiết 1 sinh viên</summary>
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var s = await _svc.GetByIdAsync(id);
         return s is null ? NotFound(new { message = "Không tìm thấy sinh viên." }) : Ok(s);
     }
 
-    /// <summary>Lấy thông tin sinh viên của user hiện tại (dùng cho student role)</summary>
-    [HttpGet("me/profile")]
-    public async Task<IActionResult> GetMyProfile()
-    {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null) return Unauthorized();
-        
-        var s = await _svc.GetByIdAsync(Guid.Parse(userId));
-        return s is null ? NotFound(new { message = "Không tìm thấy hồ sơ sinh viên." }) : Ok(s);
-    }
 
     /// <summary>Thêm sinh viên mới</summary>
     [HttpPost]
@@ -54,7 +44,7 @@ public class StudentsController : ControllerBase
     }
 
     /// <summary>Cập nhật thông tin sinh viên</summary>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] StudentUpdateDto dto)
     {
         try
@@ -66,24 +56,24 @@ public class StudentsController : ControllerBase
     }
 
     /// <summary>Xóa sinh viên (chỉ admin)</summary>
-    [HttpDelete("{id}"), Authorize(Roles = "admin")]
+    [HttpDelete("{id:guid}"), Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete(Guid id)
         => await _svc.DeleteAsync(id) ? NoContent()
            : NotFound(new { message = "Không tìm thấy sinh viên." });
 
     /// <summary>Điểm của sinh viên</summary>
-    [HttpGet("{id}/grades")]
+    [HttpGet("{id:guid}/grades")]
     public async Task<IActionResult> GetGrades(Guid id,
         [FromQuery] string? academicYear = null, [FromQuery] int? semester = null)
         => Ok(await _svc.GetGradesAsync(id, academicYear, semester));
 
     /// <summary>Học phí của sinh viên</summary>
-    [HttpGet("{id}/tuitions")]
+    [HttpGet("{id:guid}/tuitions")]
     public async Task<IActionResult> GetTuitions(Guid id)
         => Ok(await _svc.GetTuitionsAsync(id));
 
     /// <summary>Thời khóa biểu của sinh viên</summary>
-    [HttpGet("{id}/schedule")]
+    [HttpGet("{id:guid}/schedule")]
     public async Task<IActionResult> GetSchedule(Guid id, [FromQuery] string? academicYear = null, [FromQuery] int? semester = null)
         => Ok(await _svc.GetScheduleAsync(id, academicYear, semester));
 }

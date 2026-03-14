@@ -8,6 +8,7 @@ public record LoginRequest(
 );
 
 public record LoginResponse(
+    Guid   Id,
     string Token,
     string Username,
     string Email,

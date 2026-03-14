@@ -37,7 +37,7 @@ public class AuthService : IAuthService
             _cfg.GetValue<int>("Jwt:ExpireHours", 8));
 
         var token = BuildToken(user, expiresAt);
-        return new LoginResponse(token, user.Username, user.Email, user.Role, expiresAt);
+        return new LoginResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt);
     }
 
     public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest req)

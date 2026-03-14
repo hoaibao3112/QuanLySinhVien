@@ -4,189 +4,207 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { setAuthToken, setUser } from '@/lib/auth';
+import { Eye, EyeOff, Waves, ArrowRight, Lock, User, Key, AlertCircle, Zap } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
-  const [rememberMe, setRememberMe] = useState(false);
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setError(''); setLoading(true);
     try {
-      const response = await authApi.login(formData);
-      
-      // Save token and user info
-      setAuthToken(response.token);
+      const res = await authApi.login(form);
+      setAuthToken(res.token);
       setUser({
-        id: (response as any).id || '',
-        username: response.username,
-        email: response.email,
-        role: response.role,
-        fullName: (response as any).fullName,
-        studentCode: (response as any).studentCode,
+        id: (res as any).id || '',
+        username: res.username,
+        email: res.email,
+        role: res.role,
+        fullName: (res as any).fullName,
+        studentCode: (res as any).studentCode,
       });
-
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
 
+  const quickLogin = () => {
+    setForm({ username: 'admin', password: 'password123' });
+    setTimeout(() => {
+      handleSubmit({ preventDefault: () => { } } as any);
+    }, 80);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
+    <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>
+      {/* Left panel — ocean illustration */}
+      <div className="hidden lg:flex flex-col justify-between w-[48%] relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #0f2444 0%, #1d72e8 60%, #3b96f3 100%)' }}>
+
+        {/* Decorative circles */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle, #fff 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle, #60b6f8 0%, transparent 70%)' }} />
+
+        {/* Wave lines */}
+        <svg className="absolute bottom-0 left-0 w-full opacity-10" viewBox="0 0 600 200" preserveAspectRatio="none">
+          <path d="M0,100 C150,160 300,40 450,100 C540,130 570,70 600,80 L600,200 L0,200Z"
+            fill="white" />
+          <path d="M0,140 C120,100 280,180 450,130 C540,110 570,120 600,110 L600,200 L0,200Z"
+            fill="white" opacity="0.5" />
+        </svg>
+
+        <div className="relative z-10 px-12 pt-12">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+              <Waves size={22} className="text-white" />
+            </div>
+            <span className="text-white text-xl font-bold tracking-wide">EduManage</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">EduManage</h1>
-          <p className="text-gray-600 mt-2">Student Management System</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-gray-600 mt-1">Please enter your credentials to access your account.</p>
+        <div className="relative z-10 px-12 pb-16">
+          <div className="space-y-5">
+            <div className="text-white/50 text-sm font-semibold uppercase tracking-widest">
+              Hệ thống quản lý sinh viên
+            </div>
+            <h1 className="text-4xl font-bold text-white leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Chào mừng <br />trở lại
+            </h1>
+            <p className="text-blue-200/80 text-base leading-relaxed max-w-sm">
+              Quản lý toàn diện thông tin sinh viên, học phí, điểm danh và kết quả học tập trong một nền tảng.
+            </p>
           </div>
 
-          {/* Default credentials info */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-1">🔑 Tài khoản mặc định:</p>
-            <p className="text-sm text-blue-700">Username: <span className="font-mono font-semibold">admin</span></p>
-            <p className="text-sm text-blue-700">Password: <span className="font-mono font-semibold">password123</span></p>
+          {/* Stats row */}
+          <div className="flex gap-8 mt-10">
+            {[['1,240+', 'Sinh viên'], ['85+', 'Giảng viên'], ['120+', 'Môn học']].map(([n, l]) => (
+              <div key={l}>
+                <div className="text-2xl font-bold text-white">{n}</div>
+                <div className="text-blue-200/60 text-xs font-medium mt-0.5">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center px-8 py-12">
+        <div className="w-full max-w-md animate-fade-up">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #3b96f3, #1d72e8)' }}>
+              <Waves size={20} className="text-white" />
+            </div>
+            <span className="text-navy text-xl font-bold">EduManage</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-navy mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Đăng nhập
+            </h2>
+            <p className="text-slate-500 text-sm">Nhập thông tin để truy cập hệ thống</p>
+          </div>
+
+          {/* Hint box */}
+          <div className="mb-6 px-4 py-3 rounded-xl flex items-start gap-3"
+            style={{ background: '#eff8ff', border: '1px solid #bfe3fd' }}>
+            <Key size={18} className="text-blue-500 mt-0.5" />
+            <div className="text-xs text-blue-700">
+              <span className="font-bold">Tài khoản mặc định: </span>
+              username: <code className="font-mono bg-blue-100 px-1 rounded">admin</code>{' '}
+              / pass: <code className="font-mono bg-blue-100 px-1 rounded">password123</code>
+            </div>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
+            <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-700 animate-fade-in"
+              style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+              <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <svg className="w-4 h-4 inline mr-1 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Username
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                Tên đăng nhập
               </label>
-              <input
-                type="text"
-                placeholder="Student ID or Email"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div className="relative">
+                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => setForm({ ...form, username: e.target.value })}
+                  placeholder="Nhập tên đăng nhập hoặc email"
+                  className="input-base pl-9"
+                  required
+                />
+              </div>
             </div>
 
             {/* Password */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <svg className="w-4 h-4 inline mr-1 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Password
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                Mật khẩu
               </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between mb-6">
-              <label className="flex items-center">
+              <div className="relative">
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none" />
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="input-base pl-9 pr-10"
+                  required
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
-              </label>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
-                Forgot password?
-              </a>
+                <button type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors">
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded accent-blue-600" />
+                Ghi nhớ đăng nhập
+              </label>
+              <a href="#" className="text-sm font-medium text-blue-600 hover:underline">Quên mật khẩu?</a>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" disabled={loading} className="btn-primary w-full justify-center mt-2">
               {loading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang đăng nhập...
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Đang xử lý...
                 </>
               ) : (
-                <>
-                  Sign In
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
+                <>Đăng nhập <ArrowRight size={16} /></>
               )}
             </button>
 
-            {/* Quick Login Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setFormData({ username: 'admin', password: 'password123' });
-                setTimeout(() => {
-                  const form = document.querySelector('form');
-                  if (form) {
-                    const event = new Event('submit', { bubbles: true, cancelable: true });
-                    form.dispatchEvent(event);
-                  }
-                }, 100);
-              }}
-              className="w-full mt-3 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Đăng nhập nhanh (Admin)
+            <button type="button" onClick={quickLogin} disabled={loading}
+              className="btn-secondary w-full justify-center">
+              <Zap size={16} className="fill-amber-400 text-amber-400" /> Đăng nhập nhanh (Admin)
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Don&apos;t have an account?{' '}
-            <a href="#" className="text-blue-600 font-medium hover:underline">
-              Contact administration
-            </a>
+          <p className="mt-8 text-center text-xs text-slate-400">
+            © 2024 EduManage Inc. · Tất cả quyền được bảo lưu
           </p>
         </div>
-
-        <p className="text-center text-xs text-gray-500 mt-6">
-          © 2024 EDUMANAGE INC. ALL RIGHTS RESERVED
-        </p>
       </div>
     </div>
   );

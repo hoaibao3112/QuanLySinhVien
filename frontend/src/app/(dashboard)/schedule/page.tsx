@@ -53,7 +53,7 @@ export default function SchedulePage() {
       } else if (currentUser.role === 'instructor') {
         data = await instructorsApi.getSchedule(currentUser.id);
       } else if (currentUser.role === 'student') {
-        data = await studentsApi.getSchedule(currentUser.id, { academicYear, semester });
+        data = await studentsApi.getMySchedule({ academicYear, semester });
       }
       
       setSchedule(Array.isArray(data) ? data : []);

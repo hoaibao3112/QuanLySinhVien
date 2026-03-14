@@ -35,18 +35,16 @@ export default function StudentProfilePage() {
       setProfile(profileData);
       
       // Load grades and schedule if profile exists
-      if (profileData?.id) {
         try {
           const [gradesData, scheduleData] = await Promise.all([
-            studentsApi.getGrades(profileData.id),
-            studentsApi.getSchedule(profileData.id)
+            studentsApi.getMyGrades(),
+            studentsApi.getMySchedule()
           ]);
           setGrades(Array.isArray(gradesData) ? gradesData : []);
           setSchedule(Array.isArray(scheduleData) ? scheduleData : []);
         } catch (err) {
           console.error('Failed to load grades/schedule:', err);
         }
-      }
     } catch (error: any) {
       console.error('Failed to load profile:', error);
       setProfile(null);

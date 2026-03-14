@@ -113,11 +113,11 @@ export const api = new ApiClient(API_BASE_URL);
 // Auth API
 export const authApi = {
   login: (credentials: { username: string; password: string }) =>
-    api.post<{ token: string; username: string; email: string; role: string }>('/auth/login', credentials),
+    api.post<{ id: string; token: string; username: string; email: string; role: string }>('/auth/login', credentials),
   
   getMe: () => api.get<any>('/auth/me'),
   
-  changePassword: (data: { oldPassword: string; newPassword: string }) =>
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post('/auth/change-password', data),
 };
 
@@ -125,7 +125,10 @@ export const authApi = {
 export const studentsApi = {
   getAll: (params?: any) => api.get<any>(`/students${params ? `?${new URLSearchParams(params)}` : ''}`),
   getById: (id: string) => api.get<any>(`/students/${id}`),
-  getMyProfile: () => api.get<any>('/students/me/profile'),
+  getMyProfile: () => api.get<any>('/me/profile'),
+  updateMyProfile: (data: any) => api.put<any>('/me/profile', data),
+  getMySchedule: (params?: any) => api.get<any>(`/me/schedule${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getMyGrades: (params?: any) => api.get<any>(`/me/grades${params ? `?${new URLSearchParams(params)}` : ''}`),
   create: (data: any) => api.post<any>('/students', data),
   update: (id: string, data: any) => api.put<any>(`/students/${id}`, data),
   delete: (id: string) => api.delete(`/students/${id}`),
