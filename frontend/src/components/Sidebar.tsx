@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, BookOpen, CreditCard, LogOut, Settings, Calendar,
   Users, GraduationCap, Building2, Library, ClipboardList,
-  FileSpreadsheet, DollarSign, UserCheck, ChevronRight, Waves
+  FileSpreadsheet, DollarSign, UserCheck, ChevronRight, Waves,
+  Bell, Award, ShieldAlert, FileText, Star
 } from 'lucide-react';
 import { getUser, logout } from '@/lib/auth';
 
@@ -58,6 +59,11 @@ export default function Sidebar() {
     { href: '/attendance', icon: UserCheck, label: 'Điểm danh' },
     { href: '/grades', icon: FileSpreadsheet, label: 'Bảng điểm' },
     { href: '/tuition', icon: DollarSign, label: 'Học phí' },
+    { href: '/announcements', icon: Bell, label: 'Thông báo' },
+    { href: '/scholarships', icon: Award, label: 'Học bổng' },
+    { href: '/disciplinary', icon: ShieldAlert, label: 'Kỷ luật' },
+    { href: '/leave-requests', icon: FileText, label: 'Đơn xin nghỉ' },
+    { href: '/evaluations', icon: Star, label: 'Đánh giá MH' },
   ];
 
   const studentMenuItems: NavItem[] = [
@@ -68,6 +74,10 @@ export default function Sidebar() {
     { href: '/registrations', icon: ClipboardList, label: 'Đăng ký môn học' },
     { href: '/exams', icon: FileSpreadsheet, label: 'Lịch thi' },
     { href: '/tuition', icon: CreditCard, label: 'Học phí' },
+    { href: '/announcements', icon: Bell, label: 'Thông báo' },
+    { href: '/scholarships', icon: Award, label: 'Học bổng' },
+    { href: '/leave-requests', icon: FileText, label: 'Đơn xin nghỉ' },
+    { href: '/evaluations', icon: Star, label: 'Đánh giá MH' },
   ];
 
   const menuItems = userRole === 'admin' ? adminMenuItems : studentMenuItems;

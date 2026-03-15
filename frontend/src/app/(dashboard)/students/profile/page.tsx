@@ -6,8 +6,9 @@ import {
   Award, FileText, Download, Edit, CheckCircle, AlertCircle,
   Clock, Building, IdCard
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { getUser } from '@/lib/auth';
-import { studentsApi } from '@/lib/api';
+import { studentsApi, scholarshipsApi, disciplinaryApi } from '@/lib/api';
 import { StudentProfile, Grade, Schedule } from '@/types';
 
 export default function StudentProfilePage() {
@@ -15,36 +16,57 @@ export default function StudentProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [schedule, setSchedule] = useState<Schedule[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'grades' | 'schedule'>('info');
+  const [scholarships, setScholarships] = useState<any[]>([]);
+  const [disciplinary, setDisciplinary] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'info' | 'grades' | 'schedule' | 'scholarships' | 'disciplinary'>('info');
   const [user, setUser] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const targetId = searchParams.get('id');
 
   useEffect(() => {
     const currentUser = getUser();
     setUser(currentUser);
     if (currentUser) {
-      loadProfile();
+      loadProfile(targetId);
     }
-  }, []);
+  }, [targetId]);
 
-  const loadProfile = async () => {
+  const loadProfile = async (id: string | null) => {
     try {
       setLoading(true);
-      // Use the /me/profile endpoint instead of getting by ID
-      const profileData = await studentsApi.getMyProfile();
+      
+      let profileData;
+      if (id) {
+        profileData = await studentsApi.getById(id);
+      } else {
+        profileData = await studentsApi.getMyProfile();
+      }
       
       setProfile(profileData);
       
-      // Load grades and schedule if profile exists
+      const studentId = id || profileData?.id;
+
+      if (studentId) {
         try {
-          const [gradesData, scheduleData] = await Promise.all([
-            studentsApi.getMyGrades(),
-            studentsApi.getMySchedule()
+          // Determine which endpoints to use based on id existence
+          const gradesPromise = id ? studentsApi.getGrades(id) : studentsApi.getMyGrades();
+          const schedulePromise = id ? studentsApi.getSchedule(id) : studentsApi.getMySchedule();
+
+          const [gradesRes, scheduleRes, scholarshipsRes, disciplinaryRes] = await Promise.all([
+            gradesPromise,
+            schedulePromise,
+            scholarshipsApi.getApplications({ studentId }),
+            disciplinaryApi.getByStudent(studentId)
           ]);
-          setGrades(Array.isArray(gradesData) ? gradesData : []);
-          setSchedule(Array.isArray(scheduleData) ? scheduleData : []);
+
+          setGrades(Array.isArray(gradesRes) ? gradesRes : (gradesRes?.data || []));
+          setSchedule(Array.isArray(scheduleRes) ? scheduleRes : (scheduleRes?.data || []));
+          setScholarships(Array.isArray(scholarshipsRes) ? scholarshipsRes : (scholarshipsRes?.data || []));
+          setDisciplinary(Array.isArray(disciplinaryRes) ? disciplinaryRes : (disciplinaryRes?.data || []));
         } catch (err) {
-          console.error('Failed to load grades/schedule:', err);
+          console.error('Failed to load related data:', err);
         }
+      }
     } catch (error: any) {
       console.error('Failed to load profile:', error);
       setProfile(null);
@@ -247,6 +269,26 @@ export default function StudentProfilePage() {
             >
               Lịch học
             </button>
+            <button
+              onClick={() => setActiveTab('scholarships')}
+              className={`flex-1 px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'scholarships'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Học bổng
+            </button>
+            <button
+              onClick={() => setActiveTab('disciplinary')}
+              className={`flex-1 px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'disciplinary'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Kỷ luật
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -327,6 +369,77 @@ export default function StudentProfilePage() {
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-900">{item.schedule}</p>
                         <p className="text-xs text-gray-500">{item.room} • {item.instructorName}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === 'scholarships' && (
+              <div className="space-y-3">
+                {scholarships.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Award size={48} className="mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500">Chưa có thông tin học bổng</p>
+                  </div>
+                ) : (
+                  scholarships.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 font-bold">
+                          🏆
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{s.programName}</p>
+                          <p className="text-sm text-gray-500">Học kỳ {s.semester} - {s.academicYear}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                          s.status === 'approved' ? 'bg-green-100 text-green-700' :
+                          s.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          s.status === 'disbursed' ? 'bg-blue-100 text-blue-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {s.status === 'approved' ? 'Đã duyệt' : 
+                           s.status === 'rejected' ? 'Từ chối' : 
+                           s.status === 'disbursed' ? 'Đã giải ngân' : 'Chờ duyệt'}
+                        </span>
+                        {s.disbursedAmount ? <p className="text-sm font-semibold mt-1">{s.disbursedAmount.toLocaleString('vi-VN')} VND</p> : null}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === 'disciplinary' && (
+              <div className="space-y-3">
+                {disciplinary.length === 0 ? (
+                  <div className="text-center py-12">
+                     <AlertCircle size={48} className="mx-auto text-green-300 mb-4" />
+                     <p className="text-gray-500">Không có vi phạm kỷ luật nào</p>
+                  </div>
+                ) : (
+                  disciplinary.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between p-4 bg-red-50 rounded-xl border border-red-100">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 font-bold">
+                          ⚠️
+                        </div>
+                        <div>
+                          <p className="font-bold text-red-900">{d.title}</p>
+                          <p className="text-sm text-red-700">{d.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-red-900">{new Date(d.incidentDate).toLocaleDateString('vi-VN')}</p>
+                        <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold rounded-md ${
+                          d.status === 'active' ? 'bg-red-200 text-red-800' : 'bg-green-100 text-green-700'
+                        }`}>
+                           {d.status === 'active' ? 'Đang hiệu lực' : 'Đã kết thúc'}
+                        </span>
                       </div>
                     </div>
                   ))

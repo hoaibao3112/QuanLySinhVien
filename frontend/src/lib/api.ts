@@ -238,3 +238,50 @@ export const registrationApi = {
   addSemesterCourse: (periodId: string, data: any) => api.post<any>(`/registration/periods/${periodId}/courses`, data),
   removeSemesterCourse: (courseId: string) => api.delete<any>(`/registration/courses/${courseId}`),
 };
+
+// New Modules
+export const announcementsApi = {
+  getActive: () => api.get<any>('/announcements/active'),
+  getAll: (params?: any) => api.get<any>(`/announcements${params ? `?${new URLSearchParams(params)}` : ''}`),
+  create: (data: any) => api.post<any>('/announcements', data),
+  update: (id: string, data: any) => api.put<any>(`/announcements/${id}`, data),
+  delete: (id: string) => api.delete(`/announcements/${id}`),
+  togglePin: (id: string) => api.patch(`/announcements/${id}/pin`),
+};
+
+export const scholarshipsApi = {
+  getAll: (params?: any) => api.get<any>(`/scholarships${params ? `?${new URLSearchParams(params)}` : ''}`),
+  create: (data: any) => api.post<any>('/scholarships', data),
+  update: (id: string, data: any) => api.put<any>(`/scholarships/${id}`, data),
+  getApplications: (params?: any) => api.get<any>(`/student-scholarships${params ? `?${new URLSearchParams(params)}` : ''}`),
+  apply: (data: any) => api.post<any>('/student-scholarships', data),
+  approve: (id: string) => api.patch(`/student-scholarships/${id}/approve`),
+  reject: (id: string) => api.patch(`/student-scholarships/${id}/reject`),
+  disburse: (id: string) => api.patch(`/student-scholarships/${id}/disburse`),
+};
+
+export const disciplinaryApi = {
+  getAll: (params?: any) => api.get<any>(`/disciplinary${params ? `?${new URLSearchParams(params)}` : ''}`),
+  create: (data: any) => api.post<any>('/disciplinary', data),
+  complete: (id: string) => api.patch(`/disciplinary/${id}/complete`),
+  delete: (id: string) => api.delete(`/disciplinary/${id}`),
+  getByStudent: (studentId: string) => api.get<any>(`/disciplinary/student/${studentId}`),
+};
+
+export const leaveRequestsApi = {
+  getAll: (params?: any) => api.get<any>(`/leave-requests${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getPending: () => api.get<any>('/leave-requests/pending'),
+  create: (data: any) => api.post<any>('/leave-requests', data),
+  approve: (id: string) => api.patch(`/leave-requests/${id}/approve`),
+  reject: (id: string) => api.patch(`/leave-requests/${id}/reject`),
+  getByStudent: (studentId: string) => api.get<any>(`/leave-requests/student/${studentId}`),
+};
+
+export const evaluationsApi = {
+  getAll: (params?: any) => api.get<any>(`/evaluations${params ? `?${new URLSearchParams(params)}` : ''}`),
+  create: (data: any) => api.post<any>('/evaluations', data),
+  delete: (id: string) => api.delete(`/evaluations/${id}`),
+  getByCourse: (courseId: string) => api.get<any>(`/evaluations/course/${courseId}`),
+  getByInstructor: (instructorId: string) => api.get<any>(`/evaluations/instructor/${instructorId}`),
+  getStatistics: () => api.get<any>('/evaluations/statistics'),
+};

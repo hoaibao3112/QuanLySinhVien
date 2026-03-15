@@ -49,15 +49,12 @@ builder.Services.AddScoped<IDashboardService,  DashboardService>();
 builder.Services.AddScoped<AttendanceService>();
 builder.Services.AddScoped<InstructorService>();
 builder.Services.AddScoped<FacilityService>();
-// builder.Services.AddScoped<ExamScheduleService>();
-// builder.Services.AddScoped<ScholarshipService>();
-// builder.Services.AddScoped<StudentRegistrationService>();
-// builder.Services.AddScoped<DisciplinaryService>();
-// builder.Services.AddScoped<LeaveRequestService>();
-// builder.Services.AddScoped<DocumentService>();
-// builder.Services.AddScoped<EvaluationService>();
-// builder.Services.AddScoped<FacilityService>();
-// builder.Services.AddScoped<AnnouncementService>();
+// New Modules
+builder.Services.AddScoped<AnnouncementService>();
+builder.Services.AddScoped<ScholarshipService>();
+builder.Services.AddScoped<DisciplinaryService>();
+builder.Services.AddScoped<LeaveRequestService>();
+builder.Services.AddScoped<EvaluationService>();
 
 // ── CORS cho NextJS ──────────────────────────────────────────
 builder.Services.AddCors(opt =>
