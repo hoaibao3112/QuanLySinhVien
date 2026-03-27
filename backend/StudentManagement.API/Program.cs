@@ -55,6 +55,7 @@ builder.Services.AddScoped<ScholarshipService>();
 builder.Services.AddScoped<DisciplinaryService>();
 builder.Services.AddScoped<LeaveRequestService>();
 builder.Services.AddScoped<EvaluationService>();
+builder.Services.AddScoped<PredictionService>();
 
 // ── CORS cho NextJS ──────────────────────────────────────────
 builder.Services.AddCors(opt =>

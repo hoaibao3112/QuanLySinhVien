@@ -677,3 +677,38 @@ public record ApiError(
 {
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 };
+
+// ── PREDICTION / RISK ─────────────────────────────────────────
+public record StudentRiskDto(
+    Guid     StudentId,
+    string   StudentCode,
+    string   StudentName,
+    Guid     CourseId,
+    string   CourseCode,
+    string   CourseName,
+    Guid     ClassId,
+    string   ClassName,
+    decimal  AttendanceRate,
+    decimal? MidtermScore,
+    decimal? AssignmentScore,
+    decimal? FinalScore,
+    decimal  PredictedFinalScore,
+    decimal  RiskScore,
+    string   RiskLevel,
+    List<RiskFactorDto> Factors
+);
+
+public record RiskSummaryDto(
+    int     TotalStudents,
+    int     LowRisk,
+    int     MediumRisk,
+    int     HighRisk,
+    int     CriticalRisk,
+    List<StudentRiskDto> TopAtRiskStudents
+);
+
+public record RiskFactorDto(
+    string Factor,
+    string Description,
+    string Impact
+);

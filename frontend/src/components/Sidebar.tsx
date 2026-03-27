@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, CreditCard, LogOut, Settings, Calendar,
   Users, GraduationCap, Building2, Library, ClipboardList,
   FileSpreadsheet, DollarSign, UserCheck, ChevronRight, Waves,
-  Bell, Award, ShieldAlert, FileText, Star
+  Bell, Award, ShieldAlert, FileText, Star, Brain
 } from 'lucide-react';
 import { getUser, logout } from '@/lib/auth';
 
@@ -64,6 +64,7 @@ export default function Sidebar() {
     { href: '/disciplinary', icon: ShieldAlert, label: 'Kỷ luật' },
     { href: '/leave-requests', icon: FileText, label: 'Đơn xin nghỉ' },
     { href: '/evaluations', icon: Star, label: 'Đánh giá MH' },
+    { href: '/predictions', icon: Brain, label: 'Dự đoán học tập' },
   ];
 
   const studentMenuItems: NavItem[] = [

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { dashboardApi } from '@/lib/api';
+import { dashboardApi, predictionApi } from '@/lib/api';
 import {
   Users, GraduationCap, BookOpen, TrendingUp, DollarSign,
   AlertCircle, CheckCircle2, Clock, ArrowUpRight, BarChart2, Award
@@ -77,10 +77,17 @@ function AttendanceBar({ day, pct }: { day: string; pct: number }) {
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
+  const [riskData, setRiskData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    dashboardApi.getOverview().then(setData).catch(console.error).finally(() => setLoading(false));
+    Promise.all([
+      dashboardApi.getOverview().catch(() => null),
+      predictionApi.getSummary().catch(() => null),
+    ]).then(([d, r]) => {
+      setData(d);
+      setRiskData(r);
+    }).finally(() => setLoading(false));
   }, []);
 
   const stats = [
@@ -102,6 +109,21 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  // Build at-risk list from real data or fallback
+  const atRiskStudents = riskData?.topAtRiskStudents?.length > 0
+    ? riskData.topAtRiskStudents.slice(0, 5).map((s: any) => ({
+        name: s.studentName,
+        issue: s.factors?.[0]?.description || `Risk: ${s.riskScore}`,
+        pct: Math.round(s.riskScore),
+        amber: s.riskLevel === 'high',
+        red: s.riskLevel === 'critical',
+      }))
+    : [
+        { name: 'Chưa có dữ liệu', issue: 'Cần có điểm số để phân tích', pct: 0, amber: true, red: false },
+      ];
+
+  const totalAtRisk = (riskData?.highRisk ?? 0) + (riskData?.criticalRisk ?? 0);
 
   return (
     <div className="space-y-7 max-w-[1280px] mx-auto">
@@ -204,40 +226,36 @@ export default function DashboardPage() {
             time="3 ngày trước" />
         </div>
 
-        {/* At-risk students */}
+        {/* At-risk students - from prediction API */}
         <div className="rounded-2xl p-6 animate-fade-up"
           style={{ background: '#fff', border: '1.5px solid #e2eef8' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-navy">Cần chú ý</h3>
+            <h3 className="text-sm font-bold text-navy">🤖 Cần chú ý (AI)</h3>
             <Award size={16} className="text-amber-400" />
           </div>
           <div className="space-y-3">
-            {[
-              { name: 'Nguyễn Văn A', issue: 'Điểm danh thấp', pct: 62, amber: true },
-              { name: 'Trần Thị B', issue: 'Nợ học phí', pct: 0, amber: false },
-              { name: 'Lê Văn C', issue: 'GPA < 2.0', pct: 45, amber: true },
-              { name: 'Phạm Thị D', issue: 'Điểm danh thấp', pct: 55, amber: true },
-            ].map(s => (
+            {atRiskStudents.map((s: any) => (
               <div key={s.name} className="flex items-center gap-3 p-3 rounded-xl hover:bg-ocean-50/50 transition-colors cursor-pointer"
                 style={{ border: '1px solid #f0f7ff' }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                  style={{ background: s.amber ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#ef4444,#dc2626)' }}>
+                  style={{ background: s.red ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
                   {s.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-navy truncate">{s.name}</div>
-                  <div className="text-[11px] text-slate-400">{s.issue}</div>
+                  <div className="text-[11px] text-slate-400 truncate">{s.issue}</div>
                 </div>
-                <span className={`badge ${s.amber ? 'badge-amber' : 'badge-red'}`}>
-                  {s.amber ? `${s.pct}%` : 'Nợ'}
+                <span className={`badge ${s.red ? 'badge-red' : 'badge-amber'}`}>
+                  {s.pct > 0 ? `${s.pct}%` : '—'}
                 </span>
               </div>
             ))}
           </div>
-          <button className="w-full mt-4 py-2 rounded-xl text-xs font-bold text-blue-600 hover:bg-ocean-50 transition-colors"
+          <a href="/predictions"
+            className="block w-full mt-4 py-2 rounded-xl text-xs font-bold text-blue-600 hover:bg-ocean-50 transition-colors text-center"
             style={{ border: '1.5px dashed #bfe3fd' }}>
-            Xem tất cả ({14})
-          </button>
+            Xem tất cả ({totalAtRisk > 0 ? totalAtRisk : '?'})
+          </a>
         </div>
       </div>
     </div>

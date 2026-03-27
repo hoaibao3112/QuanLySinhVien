@@ -285,3 +285,11 @@ export const evaluationsApi = {
   getByInstructor: (instructorId: string) => api.get<any>(`/evaluations/instructor/${instructorId}`),
   getStatistics: () => api.get<any>('/evaluations/statistics'),
 };
+
+// Prediction / Risk API
+export const predictionApi = {
+  getSummary: () => api.get<any>('/predictions/summary'),
+  getStudents: (params?: any) => api.get<any>(`/predictions/students${params ? `?${new URLSearchParams(params)}` : ''}`),
+  getStudent: (id: string) => api.get<any>(`/predictions/students/${id}`),
+};
+
